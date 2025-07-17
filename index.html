@@ -636,6 +636,25 @@
             const ctx = document.getElementById(canvasId).getContext('2d');
             charts[canvasId] = new Chart(ctx, { type: 'bar', data: { labels: labels, datasets: [{ label: '정답률 (%)', data: data, backgroundColor: 'rgba(96, 165, 250, 0.6)', borderColor: 'rgba(59, 130, 246, 1)', borderWidth: 1 }] }, options: { indexAxis: indexAxis, scales: { x: { ticks: { autoSkip: false, maxRotation: 45, minRotation: 0 } }, y: { beginAtZero: true, suggestedMax: 100 } }, plugins: { legend: { display: false } }, responsive: true, maintainAspectRatio: true } });
         }
+        javascript
+// --- 타입(문제 유형) 집계 간소화 함수 ---
+function simplifyTypeData(typeStats, maxLabels = 7) {
+    // 예: 유형별 데이터가 너무 많으면 중요/상위 카테고리만 추림
+    const all = Object.entries(typeStats)
+        .map(([label, {c, t}]) => ({label, correct: c, total: t}))
+        .filter(item => item.total > 0);
+    // 많이 출제된 순으로 정렬
+    all.sort((a, b) => b.total - a.total);
+    let labels = all.slice(0, maxLabels).map(x => x.label);
+    let data = all.slice(0, maxLabels).map(x => Math.round((x.correct / x.total) * 100));
+    if (all.length > maxLabels) {
+        labels.push('기타');
+        const etcCorrect = all.slice(maxLabels).reduce((sum, x) => sum + x.correct, 0);
+        const etcTotal = all.slice(maxLabels).reduce((sum, x) => sum + x.total, 0);
+        data.push(etcTotal ? Math.round((etcCorrect / etcTotal) * 100) : 0);
+    }
+    return {labels, data};
+}
     </script>
 </body>
 </html>
