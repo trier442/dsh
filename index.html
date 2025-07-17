@@ -28,74 +28,122 @@
         }
         /* 출력용 스타일 */
        @media print {
-            #results-section {
-                page-break-after: always;
-                page-break-inside: avoid;
-                max-height: none !important;
-                opacity: 1 !important;
-                overflow: visible !important;
-            }
-            .chart-container, .review-container {
-                page-break-inside: avoid;
-                break-inside: avoid;
-            }
-            #analysis-report {
-                page-break-after: avoid;
-            }
-            .chart-container {
-                margin-bottom: 0.5rem !important;
-                padding-bottom: 0 !important;
-            }
-            .review-container {
-                margin-top: 0.5rem !important;
-                margin-bottom: 0.5rem !important;
-                font-size: 10pt !important;
-                padding: 0.3rem !important;
-            }
-            h2, h3 {
-                margin-bottom: 8px !important;
-                font-size: 17pt !important;
-            }
-            #overall-review {
-                font-size: 11pt !important;
-                line-height: 1.4;
-            }
-            .wrong-answer-card {
-                page-break-inside: avoid;
-                break-inside: avoid;
-                margin-bottom: 0.6rem !important;
-                font-size: 10pt !important;
-                padding: 0.45rem !important;
-            }
-            #wrong-answers-container .wrong-answer-card:nth-of-type(8n+1) {
-                page-break-before: always;
-                break-before: page;
-            }
-            #wrong-answers-container .wrong-answer-card:first-child {
-                page-break-before: auto;
-                break-before: auto;
-            }
-            .wrong-answer-card h4, .wrong-answer-card h5 {
-                font-size: 11pt !important;
-                margin-bottom: 4px !important;
-            }
-            .wrong-answer-card li {
-                font-size: 10pt !important;
-                margin: 0;
-                padding: 0;
-                line-height: 1.4;
-            }
-            .wrong-answer-card ul {
-                margin: 0 0 2px 0 !important;
-                padding: 0 !important;
-            }
-            #wrong-answers-section, #wrong-answers-container {
-                padding-left: 0 !important;
-                padding-right: 0 !important;
-                margin-left: 0 !important;
-                margin-right: 0 !important;
-            }
-        }
+    @page {
+        size: A4;
+        margin: 16mm;
+    }
+    body {
+        font-size: 9pt;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    #input-section, #print-btn-container {
+        display: none;
+    }
+    #results-section {
+        visibility: visible !important;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        box-shadow: none;
+        border: none;
+        page-break-inside: avoid;
+        page-break-after: always;
+        max-height: none !important;
+        opacity: 1 !important;
+        overflow: visible !important;
+    }
+    #results-section * {
+        visibility: visible;
+        color: #000 !important;
+    }
+    .bg-white, .bg-gray-50, .bg-blue-50 {
+        background-color: transparent !important;
+    }
+    .rounded-2xl, .rounded-xl, .rounded-lg {
+        border-radius: 0 !important;
+    }
+    .shadow-lg {
+        box-shadow: none !important;
+    }
+    .chart-container, .review-container, #analysis-report {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        margin-bottom: 0.5rem !important;
+        padding-bottom: 0 !important;
+    }
+    #analysis-report {
+        page-break-after: avoid;
+    }
+    h2, h3 {
+        margin-bottom: 8px !important;
+        font-size: 17pt !important;
+    }
+    #overall-review {
+        font-size: 11pt !important;
+        line-height: 1.4;
+        margin-top: 0.5rem !important;
+        margin-bottom: 0.5rem !important;
+        padding: 0.3rem !important;
+    }
+    .review-container {
+        margin-top: 0.5rem !important;
+        margin-bottom: 0.5rem !important;
+        font-size: 10pt !important;
+        padding: 0.3rem !important;
+    }
+    .wrong-answer-card {
+        page-break-inside: avoid;
+        break-inside: avoid;
+        margin-bottom: 0.6rem !important;
+        font-size: 10pt !important;
+        padding: 0.45rem !important;
+    }
+    /* 오답 카드 첫 번째만 항상 첫 페이지, 8문제마다 새 페이지 */
+    #wrong-answers-container .wrong-answer-card:nth-of-type(8n+1) {
+        page-break-before: always;
+        break-before: page;
+    }
+    #wrong-answers-container .wrong-answer-card:first-child {
+        page-break-before: auto;
+        break-before: auto;
+    }
+    .wrong-answer-card h4, .wrong-answer-card h5 {
+        font-size: 11pt !important;
+        margin-bottom: 4px !important;
+    }
+    .wrong-answer-card li {
+        font-size: 10pt !important;
+        margin: 0;
+        padding: 0;
+        line-height: 1.4;
+    }
+    .wrong-answer-card ul {
+        margin: 0 0 2px 0 !important;
+        padding: 0 !important;
+    }
+    #wrong-answers-section, #wrong-answers-container {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+    .chart-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    canvas {
+        max-height: 150px !important;
+    }
+    .p-6, .p-8 { padding: 0.5rem !important; }
+    .mb-12 { margin-bottom: 1.5rem !important; }
+    .mb-8 { margin-bottom: 1rem !important; }
+    .mb-6 { margin-bottom: 0.8rem !important; }
+}
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
