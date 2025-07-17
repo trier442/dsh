@@ -23,19 +23,68 @@
             overflow: hidden;
         }
         #results-section.visible {
-            max-height: 25000px; /* 충분히 큰 값 */
+            max-height: none; /* Auto height */
             opacity: 1;
         }
+        /* 출력용 스타일 */
         @media print {
-            body * { visibility: hidden; }
-            #results-section, #results-section * { visibility: visible; }
-            #results-section { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 20px; box-shadow: none; border: none; }
-            #print-btn-container, #input-section { display: none; }
-            .chart-container, .wrong-answer-card { page-break-inside: avoid; }
-            h1, h2, h3, h4, h5, p { color: #000 !important; }
+            @page {
+                size: A4;
+                margin: 20mm;
+            }
+            body {
+                font-size: 9pt; /* 기본 글자 크기 축소 */
+                -webkit-print-color-adjust: exact; /* 배경색, 색상 강제 출력 */
+                print-color-adjust: exact;
+            }
+            #input-section, #print-btn-container {
+                display: none;
+            }
+            #results-section {
+                visibility: visible !important;
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                margin: 0;
+                padding: 0;
+                box-shadow: none;
+                border: none;
+            }
+            #results-section * {
+                visibility: visible;
+                color: #000 !important;
+            }
             .bg-white { background-color: transparent !important; }
+            .bg-gray-50 { background-color: #f9fafb !important; }
+            .bg-blue-50 { background-color: #eff6ff !important; }
             .rounded-2xl, .rounded-xl, .rounded-lg { border-radius: 0 !important; }
             .shadow-lg { box-shadow: none !important; }
+            .chart-container, .review-container {
+                page-break-inside: avoid;
+            }
+            #wrong-answers-section {
+                page-break-before: always; /* 오답노트는 새 페이지에서 시작 */
+            }
+            .wrong-answer-card {
+                page-break-inside: avoid;
+            }
+            .chart-grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+            canvas {
+                max-height: 150px !important; /* 차트 높이 제한 */
+            }
+            h2 { font-size: 16pt; margin-bottom: 8px; }
+            h3 { font-size: 12pt; margin-bottom: 6px; }
+            h4 { font-size: 11pt; }
+            p, li, span { font-size: 8pt; line-height: 1.4; }
+            .p-6, .p-8 { padding: 0.5rem !important; }
+            .mb-12 { margin-bottom: 1.5rem !important; }
+            .mb-8 { margin-bottom: 1rem !important; }
+            .mb-6 { margin-bottom: 0.8rem !important; }
         }
     </style>
 </head>
@@ -91,42 +140,40 @@
         <!-- 결과 섹션 -->
         <div id="results-section" class="mt-10">
             <div class="bg-white p-6 md:p-8 rounded-2xl shadow-lg">
-                <div class="text-center mb-8">
-                    <h2 class="text-2xl md:text-3xl font-bold text-gray-800">
-                        <span id="result-name" class="text-blue-600"></span>님의 성적 분석 결과 (<span id="result-round"></span>)
-                    </h2>
-                    <p id="result-school" class="text-gray-500 mt-1"></p>
-                </div>
+                <div id="analysis-report">
+                    <div class="text-center mb-8 border-b pb-4">
+                        <h2 class="text-3xl font-bold text-gray-800">2026 수능완성 실전모의고사 성적표</h2>
+                        <div class="mt-4 text-lg">
+                            <span id="result-school" class="font-semibold"></span> <span id="result-name" class="font-bold text-blue-600"></span>
+                        </div>
+                        <p class="text-md text-gray-500 mt-1">응시 회차: <span id="result-round" class="font-semibold"></span></p>
+                    </div>
 
-                <!-- 영역별 성취도 (레이더 차트) -->
-                <div class="mb-12 chart-container">
-                    <h3 class="text-xl font-semibold mb-4 text-center">종합 성취도 분석</h3>
-                    <div class="w-full max-w-lg mx-auto p-4 bg-gray-50 rounded-xl">
-                        <canvas id="radar-chart"></canvas>
+                    <div class="mb-12 chart-container">
+                        <h3 class="text-xl font-semibold mb-4 text-center">종합 성취도 분석</h3>
+                        <div class="w-full max-w-lg mx-auto p-4 bg-gray-50 rounded-xl">
+                            <canvas id="radar-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12 chart-grid chart-container">
+                        <div class="bg-gray-50 p-4 rounded-xl"><h3 class="text-lg font-semibold mb-3 text-center">독서 지문별 성적</h3><canvas id="reading-chart"></canvas></div>
+                        <div class="bg-gray-50 p-4 rounded-xl"><h3 class="text-lg font-semibold mb-3 text-center">문학 갈래별 성적</h3><canvas id="literature-chart"></canvas></div>
+                        <div class="bg-gray-50 p-4 rounded-xl"><h3 class="text-lg font-semibold mb-3 text-center">언어와 매체 내용별 성적</h3><canvas id="language-media-chart"></canvas></div>
+                        <div class="bg-gray-50 p-4 rounded-xl"><h3 class="text-lg font-semibold mb-3 text-center">문제 유형별 성적</h3><canvas id="type-chart"></canvas></div>
+                    </div>
+                    
+                    <div class="mb-12 review-container">
+                        <h3 class="text-2xl font-bold mb-6 text-center border-t pt-8">총평</h3>
+                        <div id="overall-review" class="p-6 bg-blue-50 rounded-lg text-gray-700 leading-relaxed text-sm"></div>
                     </div>
                 </div>
 
-                <!-- 상세 분석 (막대 그래프) -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12 chart-container">
-                    <div class="bg-gray-50 p-4 rounded-xl"><h3 class="text-lg font-semibold mb-3 text-center">독서 지문별 성적</h3><canvas id="reading-chart"></canvas></div>
-                    <div class="bg-gray-50 p-4 rounded-xl"><h3 class="text-lg font-semibold mb-3 text-center">문학 갈래별 성적</h3><canvas id="literature-chart"></canvas></div>
-                    <div class="bg-gray-50 p-4 rounded-xl"><h3 class="text-lg font-semibold mb-3 text-center">언어와 매체 내용별 성적</h3><canvas id="language-media-chart"></canvas></div>
-                    <div class="bg-gray-50 p-4 rounded-xl"><h3 class="text-lg font-semibold mb-3 text-center">문제 유형별 성적</h3><canvas id="type-chart"></canvas></div>
-                </div>
-                
-                <!-- 총평 -->
-                <div class="mb-12 chart-container">
-                    <h3 class="text-2xl font-bold mb-6 text-center border-t pt-8">총평</h3>
-                    <div id="overall-review" class="p-6 bg-blue-50 rounded-lg text-gray-700 leading-relaxed"></div>
-                </div>
-
-                <!-- 오답 노트 -->
-                <div>
+                <div id="wrong-answers-section">
                     <h3 class="text-2xl font-bold mb-6 text-center border-t pt-8">오답 노트</h3>
                     <div id="wrong-answers-container" class="space-y-6"></div>
                 </div>
                 
-                <!-- 출력 버튼 -->
                 <div id="print-btn-container" class="text-center mt-10">
                     <button id="print-btn" class="bg-gray-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-300 transition">
                         성적표 출력하기
@@ -187,6 +234,55 @@
                     { qNum: 43, answer: 2, points: 3, area: "매체", subArea: "시간 표현", type: "개념 이해", detailedExplanation: { 1: "적절한 설명입니다.", 2: "② '예전'은 발화 시점을 기준으로 '꽤 오래된 지난날'을 뜻하므로 발화 시점과 관련되어 해석됩니다. 발화 시점과 상관없다는 설명은 적절하지 않습니다.", 3: "적절한 설명입니다.", 4: "적절한 설명입니다.", 5: "적절한 설명입니다." } },
                     { qNum: 44, answer: 3, points: 2, area: "매체", subArea: "매체 언어", type: "정보 유통", detailedExplanation: { 1: "적절한 이해입니다.", 2: "적절한 이해입니다.", 3: "블로그 글의 수정 날짜는 알 수 있지만, 매체 생산자가 글을 어떻게 수정했는지에 대한 구체적인 정보는 확인할 수 없으므로 적절하지 않습니다.", 4: "적절한 이해입니다.", 5: "적절한 이해입니다." } },
                     { qNum: 45, answer: 4, points: 2, area: "매체", subArea: "매체 언어", type: "시각 매체 활용", detailedExplanation: { 1: "적절한 설명입니다.", 2: "적절한 설명입니다.", 3: "적절한 설명입니다.", 4: "[자료 2]는 막대그래프로, 각 항목의 길이를 통해 양적인 비교가 가능합니다. [자료 1]은 텍스트이므로 양적 비교가 불가능합니다. 따라서 적절합니다.", 5: "적절한 설명입니다." } }
+                ]
+            },
+            "2": {
+                questions: [
+                    { qNum: 1, answer: 3, points: 2, area: "독서", subArea: "인문", type: "중심 내용 파악", detailedExplanation: {1:"H1의 입증 사례이므로 적절하지 않습니다.", 2:"H1과 무관한 사례이므로 적절하지 않습니다.", 3:"'까마귀이고 검지 않은 대상'은 H1의 반입증 사례이므로 적절합니다.", 4:"까마귀인 사례는 모두 H1과 관련이 있으므로 적절하지 않습니다.", 5:"'까마귀이고 검지 않은 대상'은 반입증 사례이므로 적절하지 않습니다."} },
+                    { qNum: 2, answer: 3, points: 2, area: "독서", subArea: "인문", type: "중심 내용 파악", detailedExplanation: {1:"H2는 보편 가설에 해당하므로 적절합니다.", 2:"H2는 조건문으로 변환할 수 있으므로 적절합니다.", 3:"논의 세계 안에 검지 않은 대상이 없어도 H2는 참일 수 있으므로 적절하지 않습니다.", 4:"검지 않은 대상이면서 까마귀인 대상이 존재하면 H2는 거짓이 되므로 적절합니다.", 5:"H2는 검지 않은 모든 대상이 까마귀가 아니라는 것을 주장하므로 적절합니다."} },
+                    { qNum: 3, answer: 4, points: 3, area: "독서", subArea: "인문", type: "세부 내용 파악", detailedExplanation: {1:"c는 H2와 무관한 사례이므로 적절하지 않습니다.", 2:"b는 H2의 반입증 사례이므로 적절하지 않습니다.", 3:"c는 H1과 무관한 사례이므로 적절하지 않습니다.", 4:"동치 조건을 받아들이면, H2의 입증 사례(d)는 H1의 입증 사례가 되고, H1의 입증 사례(a)도 H2의 입증 사례가 되므로 적절합니다.", 5:"니코드 기준만 적용하면 a는 H2와 무관한 사례이므로 적절하지 않습니다."} },
+                    { qNum: 4, answer: 5, points: 2, area: "독서", subArea: "인문", type: "숨겨진 전제 파악", detailedExplanation: {1:"보편 가설 표현을 위한 것이 아니므로 적절하지 않습니다.", 2:"니코드 기준을 수정하는 것이 아니므로 적절하지 않습니다.", 3:"표현 방식이 달라져도 의미는 같다고 보므로 적절하지 않습니다.", 4:"동치 관계에 있는 가설에만 적용되므로 적절하지 않습니다.", 5:"헴펠의 동치 조건은 가설의 표현 방식에 따라 입증 사례가 달라지는 현상을 방지하기 위해 제안되었으므로 적절합니다."} },
+                    { qNum: 5, answer: 4, points: 2, area: "독서", subArea: "인문", type: "구체적 사례 적용", detailedExplanation: {1:"적절한 설명입니다.", 2:"적절한 설명입니다.", 3:"적절한 설명입니다.", 4:"헴펠은 입증의 강도에 차이가 있을 뿐, '백조가 아니고 희지 않은 대상'도 가설을 입증한다고 보므로 적절하지 않습니다.", 5:"적절한 설명입니다."} },
+                    { qNum: 6, answer: 4, points: 2, area: "독서", subArea: "사회", type: "세부 내용 파악", detailedExplanation: {1:"적절한 설명입니다.", 2:"적절한 설명입니다.", 3:"적절한 설명입니다.", 4:"금융 당국은 보고 내용을 즉시 공시하며, 매수된 회사에 별도로 통지하지 않으므로 적절하지 않습니다.", 5:"적절한 설명입니다."} },
+                    { qNum: 7, answer: 1, points: 3, area: "독서", subArea: "사회", type: "세부 내용 파악", detailedExplanation: {1:"차등 의결권은 1주 1의결권 원칙에 위배될 소지가 있지만, 초다수 결의제는 의결 정족수를 높이는 것이므로 위배되지 않습니다. 따라서 적절하지 않습니다.", 2:"적절한 설명입니다.", 3:"적절한 설명입니다.", 4:"적절한 설명입니다.", 5:"적절한 설명입니다."} },
+                    { qNum: 8, answer: 5, points: 2, area: "독서", subArea: "사회", type: "다른 견해와의 비교", detailedExplanation: {1:"적절한 설명입니다.", 2:"적절한 설명입니다.", 3:"적절한 설명입니다.", 4:"적절한 설명입니다.", 5:"㉡ 관점에서는 방어 수단의 효과가 높을수록 경영진을 안주하게 만들어 새로운 시장 개척을 회피하게 할 수 있다고 보므로 적절하지 않습니다."} },
+                    { qNum: 9, answer: 5, points: 3, area: "독서", subArea: "사회", type: "구체적 사례 적용", detailedExplanation: {1:"'안건 1'의 발행 주식 총수 산입 제외 주식은 자사주 20주입니다.", 2:"'안건 1'과 '안건 2' 모두 자사주 20주만 제외됩니다.", 3:"'안건 1'의 출석 의결권은 70주, '안건 2'는 50주로 다릅니다.", 4:"'안건 1'의 의결 정족수는 36주입니다. A와 B가 찬성하면 37주이므로 가결됩니다.", 5:"'안건 2'의 의결 정족수는 26주 이상입니다. A와 D가 찬성하면 27주이므로 C가 반대해도 가결됩니다. 따라서 적절합니다."} },
+                    { qNum: 10, answer: 3, points: 2, area: "독서", subArea: "사회", type: "구체적 사례 적용", detailedExplanation: {1:"적절한 설명입니다.", 2:"적절한 설명입니다.", 3:"1월 30일은 지분율이 1.5%p 감소하여 1%p 이상 변동했으므로 '변동 보고' 대상입니다. 따라서 적절하지 않습니다.", 4:"적절한 설명입니다.", 5:"적절한 설명입니다."} },
+                    { qNum: 11, answer: 1, points: 2, area: "독서", subArea: "사회", type: "어휘 의미", detailedExplanation: {1:"㉠과 ①의 '내렸다'는 '판단이나 결정을 하다'라는 의미로 사용되었으므로 적절합니다.", 2:"'비가 오다'의 의미입니다.", 3:"'탈것에서 밖으로 나오다'의 의미입니다.", 4:"'상이나 벌을 주다'의 의미입니다.", 5:"'값이나 수치가 떨어지다'의 의미입니다."} },
+                    { qNum: 12, answer: 1, points: 2, area: "독서", subArea: "주제 통합", type: "글의 구조와 전개 방식", detailedExplanation: {1:"(가)는 기능 반응 모형의 등장 배경을, (나)는 최적 먹이 획득 모형의 등장 배경을 언급하므로 적절합니다.", 2:"(가)는 시간의 흐름에 따른 단계 구분이 아니므로 적절하지 않습니다.", 3:"(나)는 특정 모형의 의의와 한계를 언급하고 있으므로 '부적절함' 평가는 틀렸습니다."} },
+                    { qNum: 13, answer: 2, points: 2, area: "독서", subArea: "주제 통합", type: "세부 내용 파악", detailedExplanation: {1:"적절한 설명입니다.", 2:"개체당 포식률은 단위 시간당 한 포식자에게 소비된 피식자의 수입니다. 단위 면적당이 아니므로 적절하지 않습니다.", 3:"적절한 설명입니다.", 4:"적절한 설명입니다.", 5:"적절한 설명입니다."} },
+                    { qNum: 14, answer: 3, points: 2, area: "독서", subArea: "주제 통합", type: "중심 내용 파악", detailedExplanation: {1:"적절한 설명입니다.", 2:"적절한 설명입니다.", 3:"유형 I 기능 반응에서 포식 효율은 일정하게 유지되므로, 일정하게 증가한다는 설명은 적절하지 않습니다.", 4:"적절한 설명입니다.", 5:"적절한 설명입니다."} },
+                    { qNum: 15, answer: 3, points: 3, area: "독서", subArea: "주제 통합", type: "다른 견해와의 비교", detailedExplanation: {1:"들쥐는 올빼미의 피식자이므로 적절하지 않습니다.", 2:"참새가 들쥐 감소 시 먹이를 바꾸는 것은 '전환'의 사례이므로 적절하지 않습니다.", 3:"엄호물이 역할을 잘할수록 피식자가 보호되므로, 개체당 포식률이 급격히 증가하는 시점은 늦어질 것이므로 적절합니다.", 4:"사냥감을 기다리는 시간은 탐색 시간에 해당하므로 적절하지 않습니다.", 5:"수익성이 낮은 먹이를 선택하는 것은 최적 먹이 획득 모형을 반박하는 사례이므로 적절하지 않습니다."} },
+                    { qNum: 16, answer: 4, points: 3, area: "독서", subArea: "주제 통합", type: "구체적 사례 적용", detailedExplanation: {1:"수익성: 잠자리 5, 딱정벌레 3, 매미 4. [상황 1]에서는 잠자리를 선택합니다.", 2:"[상황 2]에서 매미의 수익성은 2.4, 딱정벌레는 3이므로 딱정벌레를 선택합니다.", 3:"[상황 1] 잠자리, [상황 2] 딱정벌레", 4:"[상황 1]에서는 수익성이 가장 높은 잠자리(5kJ/초)를, [상황 2]에서는 매미의 탐색 시간 포함 수익성(2.4kJ/초)보다 딱정벌레의 수익성(3kJ/초)이 높으므로 딱정벌레를 선택합니다. 따라서 적절합니다.", 5:"[상황 1] 잠자리, [상황 2] 딱정벌레"} },
+                    { qNum: 17, answer: 1, points: 2, area: "독서", subArea: "주제 통합", type: "어휘 의미", detailedExplanation: {1:"ⓐ '다른'은 '상이(相異)하다'와 바꿔 쓸 수 있지만, '배치(背馳)되다'는 '서로 반대로 어긋나다'는 의미이므로 적절하지 않습니다.", 2:"적절합니다.", 3:"적절합니다.", 4:"적절합니다.", 5:"적절합니다."} },
+                    { qNum: 18, answer: 4, points: 2, area: "문학", subArea: "현대시/수필", type: "작품 간 비교", detailedExplanation: {1:"(가)는 현실에 대한 부정적 인식이 없으므로 적절하지 않습니다.", 2:"(나)는 인간의 부정적 속성이나 비판적 시각이 드러나지 않으므로 적절하지 않습니다.", 3:"(다)는 인간의 노력을 예찬하는 모습이 나타나지 않으므로 적절하지 않습니다.", 4:"(가)는 매미를 통해 시인의 긍정적 삶의 태도를, (다)는 큰 나무를 통해 겸손한 삶의 태도를 드러내므로 적절합니다.", 5:"(다)에는 자연물이 쇠락하는 과정이 나타나지 않으므로 적절하지 않습니다."} },
+                    { qNum: 19, answer: 3, points: 2, area: "문학", subArea: "현대시", type: "시상 전개 방식", detailedExplanation: {1:"적절한 설명입니다.", 2:"적절한 설명입니다.", 3:"[C]에서 화자는 매미가 나무를 오르는 이유에 대해 스스로에게 묻고 있을 뿐, 매미에게 묻고 있지는 않으므로 적절하지 않습니다.", 4:"적절한 설명입니다.", 5:"적절한 설명입니다."} },
+                    { qNum: 20, answer: 4, points: 2, area: "문학", subArea: "현대시/수필", type: "시어, 시구 파악", detailedExplanation: {1:"ⓐ는 슬픔을 주지 않으므로 적절하지 않습니다.", 2:"ⓔ는 이기적인 세태 비판과 거리가 멀므로 적절하지 않습니다.", 3:"ⓒ는 글쓴이의 고통스러운 과거를 담고 있지 않으므로 적절하지 않습니다.", 4:"ⓑ는 화자가 누리고픈 긍정적 상황(모란의 개화)을, ⓔ는 글쓴이가 누리고픈 긍정적 모습(큰 나무와 더불어 사는 삶)을 담고 있으므로 적절합니다.", 5:"ⓔ는 글쓴이의 거주 공간에 있는 것이 아니므로 적절하지 않습니다."} },
+                    { qNum: 21, answer: 2, points: 2, area: "문학", subArea: "현대시", type: "시어, 시구 파악", detailedExplanation: {1:"적절한 설명입니다.", 2:"'오월 어느 날'은 모란이 지는 날이므로 화자가 기다리는 날이 아니므로 적절하지 않습니다.", 3:"적절한 설명입니다.", 4:"적절한 설명입니다.", 5:"적절한 설명입니다."} },
+                    { qNum: 22, answer: 4, points: 3, area: "문학", subArea: "현대시", type: "외적 준거 감상", detailedExplanation: {1:"적절한 감상입니다.", 2:"적절한 감상입니다.", 3:"적절한 감상입니다.", 4:"(나)는 과거, 현재, 미래 시제를 혼용하여 모란이 피고 지는 자연의 섭리와 그에 따른 화자의 정서를 드러냅니다. 제시된 시제 분석이 틀렸으므로 적절하지 않습니다.", 5:"적절한 감상입니다."} },
+                    { qNum: 23, answer: 3, points: 2, area: "문학", subArea: "현대 수필", type: "내용 파악", detailedExplanation: {1:"적절한 설명입니다.", 2:"적절한 설명입니다.", 3:"글쓴이는 전 주인이 과실 씨를 묻은 의도를 정확히 모른다고 서술했으므로 적절하지 않습니다.", 4:"적절한 설명입니다.", 5:"적절한 설명입니다."} },
+                    { qNum: 24, answer: 4, points: 2, area: "문학", subArea: "현대 소설", type: "서술상 특징", detailedExplanation: {1:"적절한 설명입니다.", 2:"적절한 설명입니다.", 3:"적절한 설명입니다.", 4:"'중략' 이후 장면에서 공간적 배경인 '다방'에 대한 구체적인 묘사는 없으므로 적절하지 않습니다.", 5:"적절한 설명입니다."} },
+                    { qNum: 25, answer: 4, points: 2, area: "문학", subArea: "현대 소설", type: "내용 이해", detailedExplanation: {1:"집주름 영감은 구문을 더 받으려는 것이므로 적절하지 않습니다.", 2:"현세는 내막을 털어놓고 싶은 충동만 느꼈을 뿐 실제로 말하지 않았으므로 적절하지 않습니다.", 3:"집주름 영감은 이미 셋방 사람들을 내보낸 후이므로 적절하지 않습니다.", 4:"두갑이는 집주인이 방을 내주지 못하게 되었다며, 그 대신 받은 수고비 천 원을 현세에게 건네므로 적절합니다.", 5:"두갑이는 다른 방을 직접 알아보라고 한 것이 아니라 자신이 알아봐 주겠다고 했으므로 적절하지 않습니다."} },
+                    { qNum: 26, answer: 4, points: 2, area: "문학", subArea: "현대 소설", type: "소재의 기능", detailedExplanation: {1:"사회적 약자가 아닌, 약자를 이용하는 인물이므로 적절하지 않습니다.", 2:"현실 저항 의식이 없으므로 적절하지 않습니다.", 3:"이상적인 본보기가 아니므로 적절하지 않습니다.", 4:"ⓐ는 친구를 속여 자신의 이익을 챙기는 비열한 인물 '두갑이'를 빗댄 표현이므로 적절합니다.", 5:"의지적 인물이 아니므로 적절하지 않습니다."} },
+                    { qNum: 27, answer: 3, points: 3, area: "문학", subArea: "현대 소설", type: "외적 준거 감상", detailedExplanation: {1:"적절한 감상입니다.", 2:"적절한 감상입니다.", 3:"'실뱀'은 두갑이에게 이용당한 무력한 '현세' 자신을 상징하는 것이지, 두갑이를 동일시한 것은 아니므로 적절하지 않습니다.", 4:"적절한 감상입니다.", 5:"적절한 감상입니다."} },
+                    { qNum: 28, answer: 1, points: 2, area: "문학", subArea: "고전 소설", type: "내용 이해", detailedExplanation: {1:"만조백관은 주봉을 시기하여 해평 도사로 추천했을 뿐, 자리다툼을 한 것은 아니므로 적절하지 않습니다.", 2:"적절한 설명입니다.", 3:"적절한 설명입니다.", 4:"적절한 설명입니다.", 5:"적절한 설명입니다."} },
+                    { qNum: 29, answer: 3, points: 2, area: "문학", subArea: "고전 소설", type: "서술상 특징", detailedExplanation: {1:"[B]에서는 경험을 간과하는 것이 아니므로 적절하지 않습니다.", 2:"[A]에서는 가설을 세우고 검증 방법을 고민하고 있지 않으므로 적절하지 않습니다.", 3:"[A]에서 해선은 여러 이야기의 연관성에 대해 의문을, [B]에서 이 부인은 주봉의 생환에 대해 확신과 의문을 교차하며 드러내므로 적절합니다.", 4:"[A]에서는 자문자답을 반복하지 않으므로 적절하지 않습니다.", 5:"[A]에서는 과거의 사건을 해결하려는 것이 아니므로 적절하지 않습니다."} },
+                    { qNum: 30, answer: 3, points: 2, area: "문학", subArea: "고전 소설", type: "소재의 기능", detailedExplanation: {1:"의도적으로 활용한 것이 아니므로 적절하지 않습니다.", 2:"주봉이 수소문한 것이 아니므로 적절하지 않습니다.", 3:"이 부인은 '풍각 소리'를 듣고 연주자가 헤어진 가족일 수 있음을 추론하게 되므로 적절합니다.", 4:"주봉은 해선의 취득 과정을 묻고 있지 않으므로 적절하지 않습니다.", 5:"해선이 가족 상봉을 주도한 것이 아니므로 적절하지 않습니다."} },
+                    { qNum: 31, answer: 5, points: 3, area: "문학", subArea: "고전 소설", type: "외적 준거 감상", detailedExplanation: {1:"적절한 감상입니다.", 2:"적절한 감상입니다.", 3:"적절한 감상입니다.", 4:"적절한 감상입니다.", 5:"해선이 발가락이 없는 이유를 묻는 것은 자신의 출생 비밀을 알기 위함이지, 복수의 주체가 되기 위해 묻는 것은 아니므로 적절하지 않습니다."} },
+                    { qNum: 32, answer: 5, points: 2, area: "문학", subArea: "고전 시가", type: "표현상 특징", detailedExplanation: {1:"적절한 설명입니다.", 2:"적절한 설명입니다.", 3:"적절한 설명입니다.", 4:"적절한 설명입니다.", 5:"(가)는 시간의 흐름에 따른 화자의 다양한 모습을 열거하지만, (나)는 그렇지 않으므로 적절하지 않습니다."} },
+                    { qNum: 33, answer: 3, points: 3, area: "문학", subArea: "고전 시가", type: "외적 준거 감상", detailedExplanation: {1:"적절한 감상입니다.", 2:"적절한 감상입니다.", 3:"(가)의 화자가 꿈에서 임을 본 것은 간절한 그리움 때문이지, 의도적인 방법이 아니며 꿈속에서 신세 한탄도 하지 못했으므로 적절하지 않습니다.", 4:"적절한 감상입니다.", 5:"적절한 감상입니다."} },
+                    { qNum: 34, answer: 4, points: 2, area: "문학", subArea: "고전 시가", type: "외적 준거 감상", detailedExplanation: {1:"적절한 이해입니다.", 2:"적절한 이해입니다.", 3:"적절한 이해입니다.", 4:"ⓓ는 임의 소식을 알기 위해 강가를 헤매는 모습으로, 작가의 은거지가 열악함을 호소하는 것과는 관련이 없으므로 적절하지 않습니다.", 5:"적절한 이해입니다."} },
+                    { qNum: 35, answer: 5, points: 2, area: "언어", subArea: "외래어 표기법", type: "개념 이해", detailedExplanation: {1:"적절한 예입니다.", 2:"적절한 예입니다.", 3:"적절한 예입니다.", 4:"적절한 예입니다.", 5:"외래어 표기법에서 받침 'ㅅ'을 쓰는 것은 국어의 음절의 끝소리 규칙(ㄷ으로 발음)과 다르다는 것을 보여주는 예시이므로 적절합니다."} },
+                    { qNum: 36, answer: 3, points: 2, area: "언어", subArea: "모음 체계", type: "자료 탐구", detailedExplanation: {1:"혀의 높낮이도 달라졌으므로 적절하지 않습니다.", 2:"입술 모양도 달라졌으므로 적절하지 않습니다.", 3:"③ '남비 > 냄비'에서 첫음절 모음은 'ㅏ'에서 'ㅐ'로 변했습니다. 이는 후설 평순 저모음에서 전설 평순 저모음으로 혀의 앞뒤 위치가 변한 것이므로 적절합니다.", 4:"입술 모양도 달라졌으므로 적절하지 않습니다.", 5:"혀의 앞뒤 위치도 달라졌으므로 적절하지 않습니다."} },
+                    { qNum: 37, answer: 2, points: 2, area: "언어", subArea: "단어의 의미", type: "개념 이해", detailedExplanation: {1:"적절한 추론입니다.", 2:"규칙 활용이라도 'ㄹ' 탈락처럼 일정한 음운 규칙으로 설명할 수 있는 형태 변화가 있을 수 있습니다. 따라서 적절하지 않습니다.", 3:"적절한 추론입니다.", 4:"적절한 추론입니다.", 5:"적절한 추론입니다."} },
+                    { qNum: 38, answer: 1, points: 3, area: "언어", subArea: "단어의 의미", type: "사례 적용", detailedExplanation: {1:"의미 영역의 확대는 (다), 축소는 (가), 이동은 (나), (라), (마)에 해당하므로 적절합니다.", 2:"적절하지 않습니다.", 3:"적절하지 않습니다.", 4:"적절하지 않습니다.", 5:"적절하지 않습니다."} },
+                    { qNum: 39, answer: 4, points: 2, area: "언어", subArea: "담화", type: "담화의 특성", detailedExplanation: {1:"적절한 설명입니다.", 2:"적절한 설명입니다.", 3:"적절한 설명입니다.", 4:"④는 학생들에게 공부하라고 직접적으로 명령하는 문장으로, 간접 표현이 아니므로 적절하지 않습니다.", 5:"적절한 설명입니다."} },
+                    { qNum: 40, answer: 5, points: 2, area: "언어", subArea: "매체", type: "정보 구성 방식", detailedExplanation: {1:"적절한 설명입니다.", 2:"적절한 설명입니다.", 3:"적절한 설명입니다.", 4:"적절한 설명입니다.", 5:"현준은 영상을 보고 게시물 이미지 교체를 제안했을 뿐, 직접 멀티미디어 재생 기능을 활용하여 학생들에게 보여주지는 않았으므로 적절하지 않습니다."} },
+                    { qNum: 41, answer: 2, points: 2, area: "언어", subArea: "매체 언어", type: "의미 전달 방식", detailedExplanation: {1:"적절한 설명입니다.", 2:"게시물은 '용기 내 챌린지'의 의미를 설명하고 있지만, 이를 부정적으로 인식하는 학생들을 위한 추가 설명은 없으므로 적절하지 않습니다.", 3:"적절한 설명입니다.", 4:"적절한 설명입니다.", 5:"적절한 설명입니다."} },
+                    { qNum: 42, answer: 5, points: 3, area: "언어", subArea: "매체 수용", type: "주체적 수용", detailedExplanation: {1:"적절한 설명입니다.", 2:"적절한 설명입니다.", 3:"적절한 설명입니다.", 4:"적절한 설명입니다.", 5:"'학생 C'는 영상과 게시물을 비교하며 게시물의 개선 방안을 제시하고 있지만, '학생 A'는 그렇지 않으므로 적절합니다."} },
+                    { qNum: 43, answer: 3, points: 2, area: "언어", subArea: "담화", type: "담화의 특성", detailedExplanation: {1:"적절한 설명입니다.", 2:"적절한 설명입니다.", 3:"③의 '-라고'는 인용의 조사가 아니라, 자신의 생각이나 주장을 강조하여 일러주는 의미를 나타내는 어미 '-더라고'의 일부이므로 적절하지 않습니다.", 4:"적절한 설명입니다.", 5:"적절한 설명입니다."} },
+                    { qNum: 44, answer: 1, points: 2, area: "언어", subArea: "매체", type: "정보 유통", detailedExplanation: {1:"게시판 이름 앞 아이콘은 게시판의 특징을 시각적으로 보여주는 역할을 하므로 적절합니다.", 2:"학교 홍보 영상 링크는 제시되지 않았으므로 적절하지 않습니다.", 3:"누리집 사용법 안내 링크는 없으므로 적절하지 않습니다.", 4:"동시 접속자 정보는 없으므로 적절하지 않습니다.", 5:"채팅 서비스는 활용되지 않았으므로 적절하지 않습니다."} },
+                    { qNum: 45, answer: 4, points: 2, area: "언어", subArea: "매체 수용", type: "주체적 수용", detailedExplanation: {1:"적절한 반응입니다.", 2:"적절한 반응입니다.", 3:"적절한 반응입니다.", 4:"학생 대표의 건의는 게시판 수를 줄여 편의성을 높이자는 것이었으므로, 새로운 게시판을 신설하여 정보를 많이 확인하게 된 것은 아니므로 적절하지 않습니다.", 5:"적절한 반응입니다."} }
                 ]
             },
             "3": {
@@ -372,38 +468,52 @@
         // --- 데이터 처리 및 분석 함수 ---
         function getPercentage(correct, total) { return total === 0 ? 0 : Math.round((correct / total) * 100); }
 
-        function simplifyTypeData(typeStats, threshold = 7) {
-            const sortedTypes = Object.entries(typeStats).filter(([, value]) => value.t > 0).sort(([, a], [, b]) => b.t - a.t);
-            if (sortedTypes.length <= threshold) {
-                return { labels: sortedTypes.map(([key]) => key), data: sortedTypes.map(([, value]) => getPercentage(value.c, value.t)) };
-            }
-            const topTypes = sortedTypes.slice(0, threshold);
-            const otherTypes = sortedTypes.slice(threshold);
-            const othersData = otherTypes.reduce((acc, [, value]) => { acc.t += value.t; acc.c += value.c; return acc; }, { t: 0, c: 0 });
-            const newLabels = topTypes.map(([key]) => key);
-            const newData = topTypes.map(([, value]) => getPercentage(value.c, value.t));
-            if (othersData.t > 0) { newLabels.push('기타'); newData.push(getPercentage(othersData.c, othersData.t)); }
-            return { labels: newLabels, data: newData };
+        function getTopAndBottomStats(statsObject, count = 1) {
+            const sorted = Object.entries(statsObject)
+                .filter(([, {t}]) => t > 0)
+                .map(([label, {c, t}]) => ({ label, rate: getPercentage(c, t), total: t }))
+                .sort((a, b) => b.rate - a.rate);
+            
+            if (sorted.length === 0) return { strengths: [], weaknesses: [] };
+
+            const strengths = sorted.slice(0, count).filter(item => item.rate > 75);
+            const weaknesses = sorted.slice(-count).filter(item => item.rate < 60);
+            
+            return { strengths, weaknesses };
         }
 
         function generateOverallReview(name, score, stats) {
-            const areaStats = Object.entries(stats.area).map(([label, {c, t}]) => ({ label, rate: getPercentage(c, t) })).sort((a, b) => b.rate - a.rate);
-            const strengthArea = areaStats[0];
-            const weaknessArea = areaStats[areaStats.length - 1];
+            let review = `<p class="mb-4"><strong class="text-blue-600 font-bold">${name}</strong>님의 이번 모의고사 점수는 <strong class="text-blue-600 font-bold">${score}점</strong>입니다. 세부 영역별 분석 결과는 다음과 같습니다.</p>`;
+            
+            const readingStats = getTopAndBottomStats(stats.reading);
+            const litStats = getTopAndBottomStats(stats.literature);
+            const typeStats = getTopAndBottomStats(stats.type, 2);
 
-            let review = `<p class="mb-4"><strong class="text-blue-600 font-bold">${name}</strong>님의 이번 모의고사 점수는 <strong class="text-blue-600 font-bold">${score}점</strong>입니다. 전반적인 분석 결과는 다음과 같습니다.</p>`;
-            if (strengthArea.rate > 80) {
-                review += `<p class="mb-2"><strong class="font-semibold text-green-600">강점:</strong> ${name}님은 특히 <strong class="font-bold">'${strengthArea.label}'</strong> 영역에서 ${strengthArea.rate}%의 높은 정답률을 보이며 뛰어난 이해도를 보여주셨습니다. 이 강점을 유지하고 심화 학습으로 연결하는 것이 중요합니다.</p>`;
+            // 강점 분석
+            let strengthText = [];
+            if (readingStats.strengths.length > 0) strengthText.push(`독서 영역에서는 특히 <strong class="font-bold">'${readingStats.strengths.map(s => s.label).join(', ')}'</strong> 지문에 대한 이해도가 높습니다.`);
+            if (litStats.strengths.length > 0) strengthText.push(`문학 영역에서는 <strong class="font-bold">'${litStats.strengths.map(s => s.label).join(', ')}'</strong> 갈래에 강점을 보입니다.`);
+            if (typeStats.strengths.length > 0) strengthText.push(`문제 유형 면에서는 <strong class="font-bold">'${typeStats.strengths.map(s => s.label).join(', ')}'</strong> 유형 풀이에 능숙합니다.`);
+
+            if (strengthText.length > 0) {
+                review += `<p class="mb-2"><strong class="font-semibold text-green-600">강점 분석:</strong> ${strengthText.join(' ')} 이러한 강점은 꾸준히 유지하며 고난도 문제에 도전하여 실력을 더욱 공고히 하는 것이 좋겠습니다.</p>`;
             } else {
-                review += `<p class="mb-2"><strong class="font-semibold text-green-600">강점:</strong> 전반적으로 모든 영역에서 고른 성취도를 보이고 있습니다. 특정 영역에 치우치지 않는 안정적인 학습 습관이 돋보입니다.</p>`;
+                review += `<p class="mb-2"><strong class="font-semibold text-green-600">강점 분석:</strong> 전반적으로 모든 영역에서 고른 성취도를 보이고 있습니다. 특정 영역에 치우치지 않는 안정적인 학습 습관이 돋보입니다.</p>`;
             }
-            if (weaknessArea.rate < 60 && strengthArea.rate - weaknessArea.rate > 20) {
-                 review += `<p class="mb-4"><strong class="font-semibold text-orange-600">약점:</strong> 반면, <strong class="font-bold">'${weaknessArea.label}'</strong> 영역에서는 ${weaknessArea.rate}%의 정답률로 다소 아쉬운 결과를 보였습니다. 이 영역의 기본 개념을 다시 점검하고, 관련 문제 풀이를 통해 취약점을 보완하는 노력이 필요합니다.</p>`;
-                 review += `<p class="font-semibold"><strong>학습 방향 제안:</strong> 앞으로는 <strong class="text-orange-600">'${weaknessArea.label}'</strong> 영역에 좀 더 시간을 투자하여 오답 노트를 꼼꼼히 작성하고, 관련 기출문제를 집중적으로 풀어보는 것을 추천합니다. 강점인 <strong class="text-green-600">'${strengthArea.label}'</strong> 영역은 꾸준히 감을 잃지 않도록 주기적으로 문제를 풀어주는 것이 좋습니다.</p>`;
+
+            // 약점 분석
+            let weaknessText = [];
+            if (readingStats.weaknesses.length > 0) weaknessText.push(`독서에서는 <strong class="font-bold">'${readingStats.weaknesses.map(s => s.label).join(', ')}'</strong> 주제의 지문에서 다소 어려움을 겪었습니다.`);
+            if (litStats.weaknesses.length > 0) weaknessText.push(`문학에서는 <strong class="font-bold">'${litStats.weaknesses.map(s => s.label).join(', ')}'</strong> 갈래의 오답률이 높게 나타났습니다.`);
+            if (typeStats.weaknesses.length > 0) weaknessText.push(`문제 유형에서는 <strong class="font-bold">'${typeStats.weaknesses.map(s => s.label).join(', ')}'</strong> 유형에 대한 보완이 필요해 보입니다.`);
+
+            if (weaknessText.length > 0) {
+                review += `<p class="mb-4"><strong class="font-semibold text-orange-600">약점 분석:</strong> ${weaknessText.join(' ')}</p>`;
+                review += `<p class="font-semibold"><strong>학습 방향 제안:</strong> 앞으로는 약점으로 분석된 영역과 유형을 중심으로 집중적인 학습이 필요합니다. 관련 개념을 다시 한번 정리하고, 오답 노트를 통해 틀린 문제의 원인을 철저히 분석하세요. 이후 유사한 유형의 문제를 반복적으로 풀어보며 문제 해결 능력을 키우는 것이 중요합니다. 특히 시간 관리 훈련을 병행하여 실전 감각을 높이는 것을 추천합니다.</p>`;
             } else {
-                 review += `<p class="mb-4"><strong class="font-semibold text-orange-600">보완점:</strong> 특별히 취약한 영역은 없지만, 고난도 문항이나 실수로 틀린 문제들을 중심으로 오답을 분석하여 완성도를 높이는 전략이 필요합니다.</p>`;
-                 review += `<p class="font-semibold"><strong>학습 방향 제안:</strong> 현재의 균형 잡힌 학습을 유지하되, 틀린 문제의 유형을 분석하여 실수를 줄이는 연습에 집중하세요. 시간을 측정하며 실전처럼 푸는 연습을 통해 시간 관리 능력과 집중력을 기르는 것도 좋은 방법입니다.</p>`;
+                review += `<p class="font-semibold"><strong>학습 방향 제안:</strong> 특별히 두드러지는 약점은 없으나, 전반적인 완성도를 높이기 위해 고난도 문항이나 실수로 틀린 문제를 중심으로 오답을 분석하는 것이 중요합니다. 현재의 균형 잡힌 학습을 유지하며, 꾸준히 실전 모의고사를 풀어보는 것이 좋은 전략입니다.</p>`;
             }
+
             return review;
         }
 
@@ -514,13 +624,13 @@
 
             const resultsSection = document.getElementById('results-section');
             resultsSection.classList.add('visible');
-            resultsSection.scrollIntoView({ behavior: 'smooth' });
+            resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
         // --- 차트 생성 헬퍼 함수 ---
         function createRadarChart(labels, data) {
             const ctx = document.getElementById('radar-chart').getContext('2d');
-            charts.radar = new Chart(ctx, { type: 'radar', data: { labels: labels, datasets: [{ label: '영역별 성취도 (%)', data: data, backgroundColor: 'rgba(59, 130, 246, 0.2)', borderColor: 'rgba(59, 130, 246, 1)', borderWidth: 2, pointBackgroundColor: 'rgba(59, 130, 246, 1)', pointBorderColor: '#fff', pointHoverBackgroundColor: '#fff', pointHoverBorderColor: 'rgba(59, 130, 246, 1)' }] }, options: { scales: { r: { angleLines: { display: true }, suggestedMin: 0, suggestedMax: 100, pointLabels: { font: { size: 14, weight: 'bold' } }, ticks: { backdropColor: 'rgba(255, 255, 255, 0.75)' } } }, plugins: { legend: { position: 'top' } } } });
+            charts.radar = new Chart(ctx, { type: 'radar', data: { labels: labels, datasets: [{ label: '영역별 성취도 (%)', data: data, backgroundColor: 'rgba(59, 130, 246, 0.2)', borderColor: 'rgba(59, 130, 246, 1)', borderWidth: 2, pointBackgroundColor: 'rgba(59, 130, 246, 1)', pointBorderColor: '#fff', pointHoverBackgroundColor: '#fff', pointHoverBorderColor: 'rgba(59, 130, 246, 1)' }] }, options: { responsive: true, maintainAspectRatio: true, scales: { r: { angleLines: { display: true }, suggestedMin: 0, suggestedMax: 100, pointLabels: { font: { size: 14, weight: 'bold' } }, ticks: { backdropColor: 'rgba(255, 255, 255, 0.75)' } } }, plugins: { legend: { position: 'top' } } } });
         }
         function createBarChart(canvasId, labels, data, indexAxis = 'x') {
             const ctx = document.getElementById(canvasId).getContext('2d');
